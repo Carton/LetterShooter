@@ -33,7 +33,7 @@ for i in range(10):
         "x": random.randint(0, size[0] - 50),
         "y": random.randint(-500, -50),
         "letters": [chr(random.randint(65, 90)) for _ in range(random.randint(1, 3))],
-        "speed": random.randint(1, 3)
+        "speed": random.randint(1, 2) # 减慢入侵者下降速度
     }
     invader_list.append(invader)
 
@@ -71,11 +71,16 @@ while not game_over:
     # 更新入侵者位置
     for invader in invader_list:
         invader["y"] += invader["speed"]
+        invader["x"] += random.randint(-1, 1) # 增加入侵者下降角度的随机性
         if invader["y"] > size[1]:
             invader["y"] = random.randint(-500, -50)
             invader["x"] = random.randint(0, size[0] - 50)
             invader["letters"] = [chr(random.randint(65, 90)) for _ in range(random.randint(1, 3))]
-            invader["speed"] = random.randint(1, 3)
+            invader["speed"] = random.randint(1, 2) # 减慢入侵者下降速度
+        if invader["x"] < 0:
+            invader["x"] = 0
+        elif invader["x"] > size[0] - 50:
+            invader["x"] = size[0] - 50
 
     # 更新大炮冷却时间
     if cannon["cooldown"] > 0:
@@ -88,8 +93,9 @@ while not game_over:
 
     # 绘制入侵者
     for invader in invader_list:
+        invader_size = random.randint(30, 50) # 增加入侵者大小的随机性
         text = font.render("".join(invader["letters"]), True, BLACK)
-        screen.blit(text, (invader["x"], invader["y"]))
+        screen.blit(text, (invader["x"], invader["y"], invader_size, invader_size))
 
     # 绘制大炮
     pygame.draw.rect(screen, RED, (cannon["x"], cannon["y"], 50, 50))
