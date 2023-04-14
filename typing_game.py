@@ -5,6 +5,7 @@ import math
 from pygame.locals import *
 
 pygame.init()
+pygame.mixer.init()
 
 # 定义颜色
 WHITE = (255, 255, 255)
@@ -18,10 +19,16 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Typing Game for Kids')
 
 # 加载资源
-background = pygame.image.load("sky_background.jpg")
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+background_image = pygame.image.load("sky_background.jpg")
+background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 #cannon = pygame.image.load("cannon.png")
 #cannon = pygame.transform.scale(cannon, (100, 100))
+
+explosion_image = pygame.image.load("explosion.png")
+explosion_image = pygame.transform.scale(explosion_image, (50, 50))
+
+shoot_sound = pygame.mixer.Sound("shoot.wav")
+explosion_sound = pygame.mixer.Sound("explosion.wav")
 
 # 设置字体
 font = pygame.font.Font(None, 36)
@@ -34,15 +41,20 @@ class Invader:
         self.pos = [random.randint(50, WIDTH - 150), 0]
         self.size = 50
         self.text_render = font.render(self.text, True, BLACK)
+        self.explosion = False
 
     def update(self):
-        new_x = self.pos[0] + self.speed * math.sin(math.radians(self.angle))
-        self.pos[0] = max(50, min(new_x, WIDTH - 150))
-        self.pos[1] += self.speed
-        return self.pos[1] > HEIGHT * 4/5
+        if not self.explosion:
+            new_x = self.pos[0] + self.speed * math.sin(math.radians(self.angle))
+            self.pos[0] = max(50, min(new_x, WIDTH - 150))
+            self.pos[1] += self.speed
+            return self.pos[1] > HEIGHT * 4/5
 
     def draw(self):
-        screen.blit(self.text_render, self.pos)
+        if self.explosion:
+            screen.blit(explosion_image, self.pos)
+        else:
+            screen.blit(self.text_render, self.pos)
 
 def game_over(score):
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
@@ -80,19 +92,19 @@ def main():
         screen.blit(score_text, (WIDTH - 200, 10))
 
         # 添加入侵者
+        #if len(invaders) < max_invaders and random.random() < 0.01:
         if len(invaders) < max_invaders:
             invaders.append(Invader())
 
         for invader in invaders:
+            invader.draw()
             if invader.update():
                 invaders_reached_ground += 1
-                invaders.remove(invader)
+                invader.explosion = True
+                explosion_sound.play()
                 if invaders_reached_ground > 3:
                     gameover = True
                     break
-            invader.draw()
-
-        pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
@@ -100,15 +112,20 @@ def main():
                 sys.exit()
             elif event.type == KEYDOWN:
                 typed_text += event.unicode
+                if typed_text == event.unicode:
+                    shoot_sound.play()
 
-                for invader in invaders[:]:
+                for invader in invaders:
                     if invader.text == typed_text:
                         invaders.remove(invader)
                         score += len(invader.text)
                         typed_text = ''
                         break
-
+            elif event.type == KEYUP:
+                typed_text = ''
+                    
         clock.tick(30)
+        pygame.display.update()
 
     game_over(score)
 
