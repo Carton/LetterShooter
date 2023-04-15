@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import os
 import math
 from pygame.locals import *
 
@@ -9,6 +10,10 @@ pygame.mixer.init()
 
 # 配置项
 HEALTH = 3
+ASSET_DIR = "assets"
+IMAGE_DIR = os.path.join(ASSET_DIR, "image")
+SOUND_DIR = os.path.join(ASSET_DIR, "sound")
+FONT_DIR = os.path.join(ASSET_DIR, "font")
 
 # 定义颜色
 WHITE = (255, 255, 255)
@@ -25,21 +30,23 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Typing Game for Kids')
 
 # 加载资源
-background_image = pygame.image.load("sky_background.jpg")
+background_image = pygame.image.load(os.path.join(IMAGE_DIR, "sky_background.jpg"))
 background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 #cannon = pygame.image.load("cannon.png")
 #cannon = pygame.transform.scale(cannon, (100, 100))
 
-explosion_image = pygame.image.load("explosion.png")
+explosion_image = pygame.image.load(os.path.join(IMAGE_DIR, "explosion.png"))
 explosion_image = pygame.transform.scale(explosion_image, (80, 80))
 
-shoot_sound = pygame.mixer.Sound("shoot.wav")
-explosion_sound = pygame.mixer.Sound("explosion.wav")
-wrong_key_sound = pygame.mixer.Sound("wrong_key.mp3")  # 添加错误按键音效
+cannon_image = pygame.image.load(os.path.join(IMAGE_DIR, "cannon_icon.png"))
+cannon_image = pygame.transform.scale(cannon_image, (40, 40))
+
+shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "shoot.wav"))
+explosion_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "explosion.wav"))
+wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))  # 添加错误按键音效
 
 # 设置字体
-# TODO：字体也修改一下，改为更容易辨认的字体，最好带有童趣的字体
-font = pygame.font.Font(None, 36)
+font = pygame.font.Font(os.path.join(FONT_DIR, "ComingSoon.ttf"), 36)
 
 class Invader:
     def __init__(self):
@@ -119,6 +126,10 @@ def main():
         score_text = font.render(f'Score: {score}', True, BLACK)
         screen.blit(score_text, (WIDTH - 200, 10))
 
+        # 更新当前几条命的数目
+        for i in range(HEALTH - invaders_reached_ground):
+            screen.blit(cannon_image, (10 + i * 50, 10))
+
         # 添加入侵者
         #if len(invaders) < max_invaders and random.random() < 0.01:
         if len(invaders) < max_invaders:
@@ -158,9 +169,12 @@ def main():
                                 typed_text = ''
                                 break
 
-                    if i == 0 and not found_match:
-                        wrong_key_sound.play()  # 播放错误按键音效
-                        typed_text = event.unicode  # 重新开始输入
+                    if not found_match:
+                        if i == 0: # 第一遍没有匹配上，还要以它为首字母再匹配一次
+                            wrong_key_sound.play()  # 播放错误按键音效
+                            typed_text = event.unicode  # 重新开始输入
+                        else:
+                            typed_text = ''
                     else:
                         break
 
@@ -168,9 +182,7 @@ def main():
         typed_text_render = font.render(typed_text, True, BLACK)
         screen.blit(typed_text_render, (WIDTH / 2 - 50, HEIGHT * 4/5 + 50))
 
-
-
-        clock.tick(10)
+        clock.tick(30)
         pygame.display.update()
 
     game_over(score)
