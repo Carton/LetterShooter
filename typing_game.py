@@ -11,6 +11,7 @@ pygame.mixer.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# TODO: 把所有尺寸改为相对值
 # 定义屏幕尺寸
 WIDTH, HEIGHT = 800, 600
 
@@ -45,7 +46,8 @@ class Invader:
         # TODO: randomize color
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
-        self.explosion_timer = 0
+        self.explosion_timer = None
+        self.exploded = False
 
     def update(self):
         if not self.explosion:
@@ -54,16 +56,17 @@ class Invader:
             self.pos[1] += self.speed
             return self.pos[1] > HEIGHT * 4/5
         else:
-            if pygame.time.get_ticks() - self.explosion_timer > 500:
-                self.explosion = False
-                self.text_render = font.render(self.text, True, BLACK)
+            if self.explosion_timer is not None and pygame.time.get_ticks() - self.explosion_timer > 500:
+                self.exploded = True
+                self.explosion_timer = None
             return False
 
     def draw(self):
         """
         """
         if self.explosion:
-            screen.blit(explosion_image, self.pos)
+            if self.explosion_timer:
+                screen.blit(explosion_image, self.pos)
         else:
             screen.blit(self.text_render, self.pos)
 
@@ -75,6 +78,7 @@ class Invader:
 def game_over(score):
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
     restart_text = font.render('Press R to restart the game', True, BLACK)
+    # 这里修改为清除所有Invaders，然后在原来背景上显示
     screen.fill(WHITE)
     screen.blit(game_over_text, (WIDTH / 2 - 100, HEIGHT / 2 - 50))
     screen.blit(restart_text, (WIDTH / 2 - 100, HEIGHT / 2))
@@ -111,6 +115,12 @@ def main():
         #if len(invaders) < max_invaders and random.random() < 0.01:
         if len(invaders) < max_invaders:
             invaders.append(Invader())
+
+        # 去掉已经爆炸后的入侵者
+        invaders1 = invaders.copy()
+        for invader in invaders1:
+            if invader.exploded:
+                invaders.remove(invader)
 
         for invader in invaders:
             invader.draw()
