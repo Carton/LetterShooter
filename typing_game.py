@@ -25,23 +25,27 @@ background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 #cannon = pygame.transform.scale(cannon, (100, 100))
 
 explosion_image = pygame.image.load("explosion.png")
-explosion_image = pygame.transform.scale(explosion_image, (50, 50))
+explosion_image = pygame.transform.scale(explosion_image, (80, 80))
 
 shoot_sound = pygame.mixer.Sound("shoot.wav")
 explosion_sound = pygame.mixer.Sound("explosion.wav")
 
 # 设置字体
+# TODO: Use a comic like font
 font = pygame.font.Font(None, 36)
 
 class Invader:
     def __init__(self):
+        # TODO: Try to generate normal word here
         self.text = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(random.randint(1, 3)))
         self.speed = random.uniform(1, 4)
         self.angle = random.uniform(-45, 45)
         self.pos = [random.randint(50, WIDTH - 150), 0]
-        self.size = 50
+        self.size = random.uniform(50,70)
+        # TODO: randomize color
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
+        self.explosion_timer = 0
 
     def update(self):
         if not self.explosion:
@@ -49,12 +53,24 @@ class Invader:
             self.pos[0] = max(50, min(new_x, WIDTH - 150))
             self.pos[1] += self.speed
             return self.pos[1] > HEIGHT * 4/5
+        else:
+            if pygame.time.get_ticks() - self.explosion_timer > 500:
+                self.explosion = False
+                self.text_render = font.render(self.text, True, BLACK)
+            return False
 
     def draw(self):
+        """
+        """
         if self.explosion:
             screen.blit(explosion_image, self.pos)
         else:
             screen.blit(self.text_render, self.pos)
+
+    def explode(self):
+        self.explosion = True
+        self.explosion_timer = pygame.time.get_ticks()
+        explosion_sound.play()
 
 def game_over(score):
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
@@ -100,12 +116,12 @@ def main():
             invader.draw()
             if invader.update():
                 invaders_reached_ground += 1
-                invader.explosion = True
-                explosion_sound.play()
+                invader.explode()
                 if invaders_reached_ground > 3:
                     gameover = True
                     break
 
+        # TODO: 这里按键也需要修改一下
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
@@ -123,7 +139,7 @@ def main():
                         break
             elif event.type == KEYUP:
                 typed_text = ''
-                    
+
         clock.tick(30)
         pygame.display.update()
 
