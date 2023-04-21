@@ -89,6 +89,10 @@ class Invader:
         explosion_sound.play()
 
 def game_over(score):
+    """
+    游戏结束函数，显示游戏结束画面和得分，等待用户按下R键重新开始游戏。
+    :param score: 当前游戏得分
+    """
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
     restart_text = font.render('Press R to restart the game', True, BLACK)
     # 在原来背景上显示
