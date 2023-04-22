@@ -3,23 +3,26 @@ import random
 import sys
 import os
 import math
+import re
 from pygame.locals import *
 
 pygame.init()
 pygame.mixer.init()
 
 # 配置项
-HEALTH = 3
+HEALTH = 6
+MAX_LEVEL = 4  # 最大关卡数
+SCORES_PER_LEVEL = 50  # 每过一关需要的分数
+
 ASSET_DIR = "assets"
 IMAGE_DIR = os.path.join(ASSET_DIR, "image")
 SOUND_DIR = os.path.join(ASSET_DIR, "sound")
 FONT_DIR = os.path.join(ASSET_DIR, "font")
+DATA_DIR = os.path.join(ASSET_DIR, "data")
 
 # 定义颜色
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
-# TODO: 显示一个大炮的图标来作为当前的剩余几条命的数量
 
 # TODO: 把所有尺寸改为相对值
 # 定义屏幕尺寸
@@ -36,7 +39,7 @@ background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 #cannon = pygame.transform.scale(cannon, (100, 100))
 
 explosion_image = pygame.image.load(os.path.join(IMAGE_DIR, "explosion.png"))
-explosion_image = pygame.transform.scale(explosion_image, (80, 80))
+explosion_image = pygame.transform.scale(explosion_image, (100, 100))
 
 cannon_image = pygame.image.load(os.path.join(IMAGE_DIR, "cannon_icon.png"))
 cannon_image = pygame.transform.scale(cannon_image, (40, 40))
@@ -48,14 +51,37 @@ wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))  
 # 设置字体
 font = pygame.font.Font(os.path.join(FONT_DIR, "ComingSoon.ttf"), 36)
 
+def load_words(directory):
+    """
+    加载指定目录下的所有top单词文件，返回一个以文件中的单词数为key，单词列表为value的字典
+    """
+    words = {}
+    for filename in os.listdir(directory):
+        with open(os.path.join(directory, filename)) as f:
+            # 如果文件名匹配指定文件名, 则处理这个文件
+            match = re.match(r'top_(\d+)_letter.*\.txt', filename)
+            if match:
+                letters = int(match.group(1))
+                words[letters] = [line.split(':')[0] for line in f.readlines()]
+                print(words[letters][:10])
+    return words
+
 class Invader:
-    def __init__(self):
-        # NOTODO: Try to generate normal word here
-        self.text = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(random.randint(1, 3)))
-        self.speed = random.uniform(1, 4)
+    # 标记这个为static 变量
+    real_words = load_words(os.path.join(DATA_DIR, "words"))  # 加载单词库
+
+    def __init__(self, level):
+        # 根据关卡生成不同数量的字母
+        letter_count = random.randint(1, level)
+        if letter_count == 1:
+            self.text = random.choice(list('abcdefghijklmnopqrstuvwxyz'))
+        else:
+            self.text = random.choice(Invader.real_words[letter_count])
+
+        self.speed = random.uniform(1, level)
         self.angle = random.uniform(-45, 45)
-        self.pos = [random.randint(50, WIDTH - 150), 0]
-        self.size = random.uniform(50,70)
+        self.pos = [random.randint(100, WIDTH - 180), 0]
+        self.size = random.uniform(50, 70)
         # TODO: randomize color
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
@@ -65,7 +91,7 @@ class Invader:
     def update(self):
         if not self.explosion:
             new_x = self.pos[0] + self.speed * math.sin(math.radians(self.angle))
-            self.pos[0] = max(50, min(new_x, WIDTH - 150))
+            self.pos[0] = max(50, min(new_x, WIDTH - 50))
             self.pos[1] += self.speed
             return self.pos[1] > HEIGHT * 4/5
         else:
@@ -110,7 +136,6 @@ def game_over(score):
                 return
 
 
-
 def main():
     clock = pygame.time.Clock()
 
@@ -119,6 +144,7 @@ def main():
     max_invaders = 3
     gameover = False
     invaders_reached_ground = 0
+    level = 1  # 添加关卡变量
 
     typed_text = ''
 
@@ -128,16 +154,15 @@ def main():
 
         # 更新计分牌
         score_text = font.render(f'Score: {score}', True, BLACK)
-        screen.blit(score_text, (WIDTH - 200, 10))
+        screen.blit(score_text, (WIDTH - 180, 10))
 
         # 更新当前几条命的数目
         for i in range(HEALTH - invaders_reached_ground):
             screen.blit(cannon_image, (10 + i * 50, 10))
 
         # 添加入侵者
-        #if len(invaders) < max_invaders and random.random() < 0.01:
-        if len(invaders) < max_invaders:
-            invaders.append(Invader())
+        if len(invaders) < max_invaders and random.random() < 0.5:
+            invaders.append(Invader(level))
 
         # 去掉已经爆炸后的入侵者
         invaders1 = invaders.copy()
@@ -174,9 +199,9 @@ def main():
                                 break
 
                     if not found_match:
-                        if i == 0: # 第一遍没有匹配上，还要以它为首字母再匹配一次
-                            wrong_key_sound.play()  # 播放错误按键音效
-                            typed_text = event.unicode  # 重新开始输入
+                        if i == 0:   # 第一遍没有匹配上，还要以它为首字母再匹配一次
+                            wrong_key_sound.play()   # 播放错误按键音效
+                            typed_text = event.unicode   # 重新开始输入
                         else:
                             typed_text = ''
                     else:
@@ -186,10 +211,15 @@ def main():
         typed_text_render = font.render(typed_text, True, BLACK)
         screen.blit(typed_text_render, (WIDTH / 2 - 50, HEIGHT * 4/5 + 50))
 
-        clock.tick(30)
+        if score // SCORES_PER_LEVEL >= level:
+            level += 1
+        level = min(level, MAX_LEVEL)
+
+        clock.tick(40)
         pygame.display.update()
 
     game_over(score)
+
 
 if __name__ == '__main__':
     while True:
