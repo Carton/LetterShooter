@@ -26,31 +26,38 @@ BLACK = (0, 0, 0)
 
 # TODO: 把所有尺寸改为相对值
 # TODO: 考虑发射激光特效来集中入侵者
-# 定义屏幕尺寸
-WIDTH, HEIGHT = 800, 600
+# TODO: 增加按Esc键停顿
+# TODO：添加背景音乐
 
 # 创建游戏窗口
+BASE_WIDTH, BASE_HEIGHT = 800, 600
+
+screen_info = pygame.display.Info()
+WIDTH, HEIGHT = screen_info.current_w, screen_info.current_h
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+SCALE_X = WIDTH / BASE_WIDTH
+SCALE_Y = HEIGHT / BASE_HEIGHT
+
 pygame.display.set_caption('Typing Game for Kids')
 
 # 加载资源
 background_image = pygame.image.load(os.path.join(IMAGE_DIR, "saturn_scifi_background.jpg"))
 background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
-#cannon = pygame.image.load("cannon.png")
-#cannon = pygame.transform.scale(cannon, (100, 100))
+
 
 explosion_image = pygame.image.load(os.path.join(IMAGE_DIR, "explosion.png"))
-explosion_image = pygame.transform.scale(explosion_image, (100, 100))
+explosion_image = pygame.transform.scale(explosion_image, (int(100 * SCALE_X), int(100 * SCALE_Y)))
 
 cannon_image = pygame.image.load(os.path.join(IMAGE_DIR, "cannon_icon.png"))
-cannon_image = pygame.transform.scale(cannon_image, (40, 40))
+cannon_image = pygame.transform.scale(cannon_image, (int(40 * SCALE_X), int(40 * SCALE_Y)))
 
 shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "shoot.wav"))
 explosion_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "explosion.wav"))
 wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))  # 添加错误按键音效
 
 # 设置字体
-font = pygame.font.Font(os.path.join(FONT_DIR, "Orbitron-VariableFont_wght.ttf"), 36)
+font = pygame.font.Font(os.path.join(FONT_DIR, "Orbitron-VariableFont_wght.ttf"), int(36 * min(SCALE_X, SCALE_Y)))
 
 def load_words(directory):
     """
@@ -79,10 +86,10 @@ class Invader:
         else:
             self.text = random.choice(Invader.real_words[letter_count])
 
-        self.speed = random.uniform(1, level)
+        self.speed = random.uniform(1, level) * SCALE_Y
         self.angle = random.uniform(-45, 45)
-        self.pos = [random.randint(100, WIDTH - 180), 0]
-        self.size = random.uniform(50, 70)
+        self.pos = [random.randint(100 * SCALE_X, WIDTH - 180 * SCALE_X), 0]
+        self.size = random.uniform(50, 70) * SCALE_X
         # TODO: 考虑使用一些特效，比如粗体字，下落速度更快，但是得分更高
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
@@ -92,7 +99,7 @@ class Invader:
     def update(self):
         if not self.explosion:
             new_x = self.pos[0] + self.speed * math.sin(math.radians(self.angle))
-            self.pos[0] = max(50, min(new_x, WIDTH - 50))
+            self.pos[0] = max(50 * SCALE_X, min(new_x, WIDTH - 50 * SCALE_X))
             self.pos[1] += self.speed
             return self.pos[1] > HEIGHT * 4/5
         else:
@@ -124,8 +131,8 @@ def game_over(score):
     restart_text = font.render('Press R to restart the game', True, BLACK)
     # 在原来背景上显示
 
-    screen.blit(game_over_text, (WIDTH / 2 - 100, HEIGHT / 2 - 50))
-    screen.blit(restart_text, (WIDTH / 2 - 100, HEIGHT / 2))
+    screen.blit(game_over_text, (WIDTH / 2 - 200 * SCALE_X, HEIGHT / 2 - 50 * SCALE_Y))
+    screen.blit(restart_text, (WIDTH / 2 - 200 * SCALE_X, HEIGHT / 2))
     pygame.display.update()
 
     while True:
@@ -155,11 +162,11 @@ def main():
 
         # 更新计分牌
         score_text = font.render(f'Score: {score}', True, BLACK)
-        screen.blit(score_text, (WIDTH - 180, 10))
+        screen.blit(score_text, ((WIDTH - 180 * SCALE_X), 10 * SCALE_Y))
 
         # 更新当前几条命的数目
         for i in range(HEALTH - invaders_reached_ground):
-            screen.blit(cannon_image, (10 + i * 50, 10))
+            screen.blit(cannon_image, (10 * SCALE_X + i * 50 * SCALE_X, 10 * SCALE_Y))
 
         # 添加入侵者
         if len(invaders) < max_invaders and random.random() < 0.5:
