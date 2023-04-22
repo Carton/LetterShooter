@@ -10,7 +10,7 @@ pygame.init()
 pygame.mixer.init()
 
 # 配置项
-HEALTH = 1
+HEALTH = 6
 MAX_LEVEL = 4  # 最大关卡数
 SCORES_PER_LEVEL = 50  # 每过一关需要的分数
 SPEED_MOD = 1 / 3
@@ -35,7 +35,8 @@ def scale_y(y):
 def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
-# TODO: 考虑发射激光特效来集中入侵者
+# TODO: 使用更多颜色的激光
+# TODO：设置界面，可以设置命数，难度（速度，字母数量），音效开关，背景音乐开关
 
 # 创建游戏窗口
 BASE_WIDTH, BASE_HEIGHT = 800, 600
@@ -103,6 +104,7 @@ class Invader:
         self.explosion = False
         self.explosion_timer = None
         self.exploded = False
+        self.laser_hit = False
 
     def update(self):
         if not self.explosion:
@@ -129,6 +131,39 @@ class Invader:
         self.explosion = True
         self.explosion_timer = pygame.time.get_ticks()
         explosion_sound.play()
+
+
+class LaserBeam:
+    def __init__(self, target_pos):
+        self.target_pos = target_pos
+        self.pos = [WIDTH / 2, HEIGHT * 4 / 5]
+        self.speed = scale_y(10)
+        self.image = pygame.image.load(os.path.join(IMAGE_DIR, "laser_beam.png"))
+        self.image = pygame.transform.scale(self.image, (scale_x(50), scale_y(50)))
+        self.active = True
+
+    def update(self):
+        direction = [self.target_pos[0] - self.pos[0], self.target_pos[1] - self.pos[1]]
+        distance = math.sqrt(direction[0] ** 2 + direction[1] ** 2)
+        if distance <= self.speed:
+            self.active = False
+            return True
+        direction_normalized = [direction[0] / distance, direction[1] / distance]
+        self.pos[0] += direction_normalized[0] * self.speed
+        self.pos[1] += direction_normalized[1] * self.speed
+        return False
+
+    def calculate_angle(self, target_pos):
+        dx = target_pos[0] - self.pos[0]
+        dy = target_pos[1] - self.pos[1]
+        angle = math.degrees(math.atan2(dy, dx))
+        return angle
+
+    def draw(self):
+        angle = self.calculate_angle(self.target_pos)
+        # 注意：这里需要使用负角度，因为pygame的坐标系是从上到下的
+        rotated_image = pygame.transform.rotate(self.image, -angle)
+        screen.blit(rotated_image, self.pos)
 
 def game_over(score, invaders):
     """
@@ -187,6 +222,7 @@ def main():
     clock = pygame.time.Clock()
 
     invaders = []
+    laser_beams = []
     score = 0
     max_invaders = 3
     gameover = False
@@ -215,11 +251,12 @@ def main():
             invaders.append(Invader(level))
 
         # 去掉已经爆炸后的入侵者
-        invaders1 = invaders.copy()
-        for invader in invaders1:
+        _invaders = invaders.copy()
+        for invader in _invaders:
             if invader.exploded:
                 invaders.remove(invader)
 
+        # 更新入侵者的状态，如果有入侵者到达地面则游戏结束
         for invader in invaders:
             invader.draw()
             if invader.update():
@@ -228,6 +265,17 @@ def main():
                 if invaders_reached_ground >= HEALTH:
                     gameover = True
                     break
+
+        # 更新激光束的状态，并在击中目标时播放爆炸效果
+        for beam in laser_beams:
+            beam.draw()
+            if beam.update():
+                for invader in invaders:
+                    if invader.laser_hit:
+                        invader.explode()
+                        score += len(invader.text)
+                        invaders.remove(invader)
+                laser_beams.remove(beam)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -245,8 +293,8 @@ def main():
                             found_match = True
                             if invader.text == typed_text:
                                 shoot_sound.play()
-                                invaders.remove(invader)
-                                score += len(invader.text)
+                                invader.laser_hit = True
+                                laser_beams.append(LaserBeam(invader.pos))
                                 typed_text = ''
                                 break
 
@@ -259,9 +307,10 @@ def main():
                     else:
                         break
 
+
         # 在屏幕上显示用户当前输入的按键内容
         typed_text_render = font.render(typed_text, True, BLACK)
-        screen.blit(typed_text_render, (WIDTH / 2 - 50, HEIGHT * 4/5 + 50))
+        screen.blit(typed_text_render, (WIDTH / 2 - scale_x(30), HEIGHT * 4/5 + scale_y(30)))
 
         if score // SCORES_PER_LEVEL >= level:
             level += 1
