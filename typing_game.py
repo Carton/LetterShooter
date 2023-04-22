@@ -25,6 +25,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 # TODO: 把所有尺寸改为相对值
+# TODO: 考虑发射激光特效来集中入侵者
 # 定义屏幕尺寸
 WIDTH, HEIGHT = 800, 600
 
@@ -33,7 +34,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Typing Game for Kids')
 
 # 加载资源
-background_image = pygame.image.load(os.path.join(IMAGE_DIR, "sky_background.jpg"))
+background_image = pygame.image.load(os.path.join(IMAGE_DIR, "saturn_scifi_background.jpg"))
 background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 #cannon = pygame.image.load("cannon.png")
 #cannon = pygame.transform.scale(cannon, (100, 100))
@@ -49,7 +50,7 @@ explosion_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "explosion.wav"))
 wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))  # 添加错误按键音效
 
 # 设置字体
-font = pygame.font.Font(os.path.join(FONT_DIR, "ComingSoon.ttf"), 36)
+font = pygame.font.Font(os.path.join(FONT_DIR, "Orbitron-VariableFont_wght.ttf"), 36)
 
 def load_words(directory):
     """
@@ -82,7 +83,7 @@ class Invader:
         self.angle = random.uniform(-45, 45)
         self.pos = [random.randint(100, WIDTH - 180), 0]
         self.size = random.uniform(50, 70)
-        # TODO: randomize color
+        # TODO: 考虑使用一些特效，比如粗体字，下落速度更快，但是得分更高
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
         self.explosion_timer = None
