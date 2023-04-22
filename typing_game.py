@@ -36,6 +36,7 @@ def scale_min_xy(v):
 
 # TODO: 考虑发射激光特效来集中入侵者
 # TODO: 增加按Esc键停顿
+# TODO：结束游戏时清空所有入侵者
 # TODO：添加背景音乐
 
 # 创建游戏窗口
@@ -153,6 +154,26 @@ def game_over(score):
                 return
 
 
+def pause():
+    """
+    暂停函数，显示暂停画面，等待用户按下R键继续游戏。
+    """
+    pause_text = font.render('Game Paused', True, BLACK)
+    restart_text = font.render('Press Q to quit, other keys to resume', True, BLACK)
+    # 在原来背景上显示
+    screen.blit(pause_text, (WIDTH / 2 - scale_x(90), HEIGHT / 2 - scale_y(50)))
+    screen.blit(restart_text, (WIDTH / 2 - scale_x(250), HEIGHT / 2))
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_q):
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN:
+                return
+
+
 def main():
     clock = pygame.time.Clock()
 
@@ -197,9 +218,11 @@ def main():
                     break
 
         for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+            if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                pause()
             elif event.type == KEYDOWN:
                 typed_text += event.unicode
                 found_match = False
