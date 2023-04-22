@@ -35,7 +35,6 @@ def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
 # TODO: 考虑发射激光特效来集中入侵者
-# TODO：添加背景音乐
 
 # 创建游戏窗口
 BASE_WIDTH, BASE_HEIGHT = 800, 600
@@ -194,6 +193,10 @@ def main():
     level = 1  # 添加关卡变量
 
     typed_text = ''
+
+    # 加载并循环播放背景音乐
+    pygame.mixer.music.load(os.path.join(SOUND_DIR, 'neon-gaming-128925.mp3'))
+    pygame.mixer.music.play(-1)
 
     while not gameover:
         screen.blit(background, (0, 0))
