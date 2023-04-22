@@ -13,6 +13,7 @@ pygame.mixer.init()
 HEALTH = 1
 MAX_LEVEL = 4  # 最大关卡数
 SCORES_PER_LEVEL = 50  # 每过一关需要的分数
+SPEED_MOD = 1 / 3
 
 ASSET_DIR = "assets"
 IMAGE_DIR = os.path.join(ASSET_DIR, "image")
@@ -26,10 +27,10 @@ BLACK = (0, 0, 0)
 
 # 一些工具函数
 def scale_x(x):
-    return int(x * SCALE_X)
+    return x * SCALE_X
 
 def scale_y(y):
-    return int(y * SCALE_Y)
+    return y * SCALE_Y
 
 def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
@@ -93,7 +94,7 @@ class Invader:
         else:
             self.text = random.choice(Invader.real_words[letter_count])
 
-        self.speed = scale_y(random.uniform(1, level))
+        self.speed = scale_y(random.uniform(1, level) * SPEED_MOD)
         self.angle = random.uniform(-45, 45)
         self.pos = [random.randint(scale_x(100), WIDTH - scale_x(180)), 0]
         self.size = scale_min_xy(random.uniform(50, 70))
@@ -266,7 +267,7 @@ def main():
             level += 1
         level = min(level, MAX_LEVEL)
 
-        clock.tick(40)
+        clock.tick(120)
         pygame.display.update()
 
     game_over(score, invaders)
