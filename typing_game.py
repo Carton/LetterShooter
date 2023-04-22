@@ -10,7 +10,7 @@ pygame.init()
 pygame.mixer.init()
 
 # 配置项
-HEALTH = 6
+HEALTH = 1
 MAX_LEVEL = 4  # 最大关卡数
 SCORES_PER_LEVEL = 50  # 每过一关需要的分数
 
@@ -35,8 +35,6 @@ def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
 # TODO: 考虑发射激光特效来集中入侵者
-# TODO: 增加按Esc键停顿
-# TODO：结束游戏时清空所有入侵者
 # TODO：添加背景音乐
 
 # 创建游戏窗口
@@ -132,14 +130,25 @@ class Invader:
         self.explosion_timer = pygame.time.get_ticks()
         explosion_sound.play()
 
-def game_over(score):
+def game_over(score, invaders):
     """
     游戏结束函数，显示游戏结束画面和得分，等待用户按下R键重新开始游戏。
     :param score: 当前游戏得分
+    :param invaders: 当前游戏中的入侵者列表
     """
+
+    # 清空入侵者列表
+    invaders.clear()
+
+    # 在原来背景上显示
+    screen.blit(background, (0, 0))
+
+    # 清除 health 显示
+    #for i in range(HEALTH):
+    #    pygame.draw.rect(screen, (0, 0, 0), (scale_x(10) + i * scale_x(50), scale_y(10), scale_x(40), scale_y(40)))
+
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
     restart_text = font.render('Press R to restart the game', True, BLACK)
-    # 在原来背景上显示
 
     screen.blit(game_over_text, (WIDTH / 2 - scale_x(200), HEIGHT / 2 - scale_y(50)))
     screen.blit(restart_text, (WIDTH / 2 - scale_x(200), HEIGHT / 2))
@@ -188,7 +197,6 @@ def main():
 
     while not gameover:
         screen.blit(background, (0, 0))
-        #screen.blit(cannon, (WIDTH / 2 - 50, HEIGHT * 4/5))
 
         # 更新计分牌
         score_text = font.render(f'Score: {score}', True, BLACK)
@@ -258,7 +266,7 @@ def main():
         clock.tick(40)
         pygame.display.update()
 
-    game_over(score)
+    game_over(score, invaders)
 
 
 if __name__ == '__main__':
