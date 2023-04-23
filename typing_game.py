@@ -9,10 +9,10 @@ from pygame.locals import *
 pygame.init()
 pygame.mixer.init()
 
-# 配置项
+# Configuration
 HEALTH = 6
-MAX_LEVEL = 4  # 最大关卡数
-SCORES_PER_LEVEL = 50  # 每过一关需要的分数
+MAX_LEVEL = 4  # Maximum number of levels
+SCORES_PER_LEVEL = 50  # The score required to pass each level
 SPEED_MOD = 1 / 3
 
 ASSET_DIR = "assets"
@@ -21,11 +21,11 @@ SOUND_DIR = os.path.join(ASSET_DIR, "sound")
 FONT_DIR = os.path.join(ASSET_DIR, "font")
 DATA_DIR = os.path.join(ASSET_DIR, "data")
 
-# 定义颜色
+# Define colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-# 一些工具函数
+# Some utility functions
 def scale_x(x):
     return x * SCALE_X
 
@@ -35,10 +35,10 @@ def scale_y(y):
 def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
-# TODO: 使用更多颜色的激光
-# TODO：设置界面，可以设置命数，难度（速度，字母数量），音效开关，背景音乐开关
+# TODO: Use more colors for the laser
+# TODO: Settings interface, can set the number of lives, difficulty (speed, number of letters), sound effect switch, background music switch
 
-# 创建游戏窗口
+# Create game window
 BASE_WIDTH, BASE_HEIGHT = 800, 600
 
 screen_info = pygame.display.Info()
@@ -50,7 +50,7 @@ SCALE_Y = HEIGHT / BASE_HEIGHT
 
 pygame.display.set_caption('Typing Game for Kids')
 
-# 加载资源
+# Load resources
 background_image = pygame.image.load(os.path.join(IMAGE_DIR, "saturn_scifi_background.jpg"))
 background = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 
@@ -63,32 +63,31 @@ cannon_image = pygame.transform.scale(cannon_image, (scale_x(40), scale_y(40)))
 
 shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "shoot.wav"))
 explosion_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "explosion.wav"))
-wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))   # 添加错误按键音效
+wrong_key_sound = pygame.mixer.Sound(os.path.join(SOUND_DIR, "wrong_key.mp3"))   # Add wrong key sound effect
 
-# 设置字体
+# Set font
 font = pygame.font.Font(os.path.join(FONT_DIR, "Orbitron-VariableFont_wght.ttf"), scale_min_xy(36))
 
 def load_words(directory):
     """
-    加载指定目录下的所有top单词文件，返回一个以文件中的单词数为key，单词列表为value的字典
+    Load all top word files in the specified directory.
+    Returns a dictionary with the number of letters as the key and the list of words as the value
     """
     words = {}
     for filename in os.listdir(directory):
         with open(os.path.join(directory, filename)) as f:
-            # 如果文件名匹配指定文件名, 则处理这个文件
+            # If the file name matches the specified file name, process this file
             match = re.match(r'top_(\d+)_letter.*\.txt', filename)
             if match:
                 letters = int(match.group(1))
                 words[letters] = [line.split(':')[0] for line in f.readlines()]
-                print(words[letters][:10])
     return words
 
 class Invader:
-    # 标记这个为static 变量
-    real_words = load_words(os.path.join(DATA_DIR, "words"))  # 加载单词库
+    real_words = load_words(os.path.join(DATA_DIR, "words"))  # Load word library
 
     def __init__(self, level):
-        # 根据关卡生成不同数量的字母
+        # Generate different numbers of letters based on the level
         letter_count = random.randint(1, level)
         if letter_count == 1:
             self.text = random.choice(list('abcdefghijklmnopqrstuvwxyz'))
@@ -99,7 +98,7 @@ class Invader:
         self.angle = random.uniform(-45, 45)
         self.pos = [random.randint(scale_x(100), WIDTH - scale_x(180)), 0]
         self.size = scale_min_xy(random.uniform(50, 70))
-        # TODO: 考虑使用一些特效，比如粗体字，下落速度更快，但是得分更高
+        # TODO: Consider using some special effects, such as bold text, faster falling speed, but higher scores
         self.text_render = font.render(self.text, True, BLACK)
         self.explosion = False
         self.explosion_timer = None
@@ -119,8 +118,6 @@ class Invader:
             return False
 
     def draw(self):
-        """
-        """
         if self.explosion:
             if self.explosion_timer:
                 screen.blit(explosion_image, self.pos)
@@ -161,26 +158,26 @@ class LaserBeam:
 
     def draw(self):
         angle = self.calculate_angle(self.target_pos)
-        # 注意：这里需要使用负角度，因为pygame的坐标系是从上到下的
+        # Note: Use a negative angle here because pygame's coordinate system is from top to bottom
         rotated_image = pygame.transform.rotate(self.image, -angle)
         screen.blit(rotated_image, self.pos)
 
 def game_over(score, invaders):
     """
-    游戏结束函数，显示游戏结束画面和得分，等待用户按下R键重新开始游戏。
-    :param score: 当前游戏得分
-    :param invaders: 当前游戏中的入侵者列表
+    Game over function. Display the game over screen and score and
+    wait for the user to press the R key to restart the game.
+
+    :param score: current game score
+    :param invaders: list of invaders in the current game
     """
 
-    # 清空入侵者列表
+    # Clear the list of invaders
     invaders.clear()
 
-    # 在原来背景上显示
+    # Display on the original background
     screen.blit(background, (0, 0))
 
-    # 清除 health 显示
-    #for i in range(HEALTH):
-    #    pygame.draw.rect(screen, (0, 0, 0), (scale_x(10) + i * scale_x(50), scale_y(10), scale_x(40), scale_y(40)))
+    # Clear health display
 
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
     restart_text = font.render('Press R to restart the game', True, BLACK)
@@ -200,11 +197,12 @@ def game_over(score, invaders):
 
 def pause():
     """
-    暂停函数，显示暂停画面，等待用户按下R键继续游戏。
+    Pause function. Display the pause screen, and wait for
+    the user to press the R key to continue the game.
     """
     pause_text = font.render('Game Paused', True, BLACK)
     restart_text = font.render('Press Q to quit, other keys to resume', True, BLACK)
-    # 在原来背景上显示
+    # Display on the original background
     screen.blit(pause_text, (WIDTH / 2 - scale_x(90), HEIGHT / 2 - scale_y(50)))
     screen.blit(restart_text, (WIDTH / 2 - scale_x(250), HEIGHT / 2))
     pygame.display.update()
@@ -227,36 +225,36 @@ def main():
     max_invaders = 3
     gameover = False
     invaders_reached_ground = 0
-    level = 1  # 添加关卡变量
+    level = 1  # Add level variable
 
     typed_text = ''
 
-    # 加载并循环播放背景音乐
+    # Load and loop background music
     pygame.mixer.music.load(os.path.join(SOUND_DIR, 'neon-gaming-128925.mp3'))
     pygame.mixer.music.play(-1)
 
     while not gameover:
         screen.blit(background, (0, 0))
 
-        # 更新计分牌
+        # Update scoreboard
         score_text = font.render(f'Score: {score}', True, BLACK)
         screen.blit(score_text, ((WIDTH - scale_x(180)), scale_y(10)))
 
-        # 更新当前几条命的数目
+        # Update the number of current lives
         for i in range(HEALTH - invaders_reached_ground):
             screen.blit(cannon_image, (scale_x(10) + i * scale_x(50), scale_y(10)))
 
-        # 添加入侵者
+        # Add invaders
         if len(invaders) < max_invaders and random.random() < 0.5:
             invaders.append(Invader(level))
 
-        # 去掉已经爆炸后的入侵者
+        # Remove invaders that have already exploded
         _invaders = invaders.copy()
         for invader in _invaders:
             if invader.exploded:
                 invaders.remove(invader)
 
-        # 更新入侵者的状态，如果有入侵者到达地面则游戏结束
+        # Update the status of the invaders, if an invader reaches the ground, the game is over
         for invader in invaders:
             invader.draw()
             if invader.update():
@@ -266,7 +264,7 @@ def main():
                     gameover = True
                     break
 
-        # 更新激光束的状态，并在击中目标时播放爆炸效果
+        # Update the status of laser beams and play explosion effect when hitting targets
         for beam in laser_beams:
             beam.draw()
             if beam.update():
@@ -299,16 +297,16 @@ def main():
                                 break
 
                     if not found_match:
-                        if i == 0:   # 第一遍没有匹配上，还要以它为首字母再匹配一次
-                            wrong_key_sound.play()   # 播放错误按键音效
-                            typed_text = event.unicode   # 重新开始输入
+                        if i == 0:   # If not matched in the first round, match again with it as the first letter
+                            wrong_key_sound.play()   # Play the sound effect of pressing the wrong key
+                            typed_text = event.unicode   # Start typing again
                         else:
                             typed_text = ''
                     else:
                         break
 
 
-        # 在屏幕上显示用户当前输入的按键内容
+        # Display the current keystrokes entered by the user on the screen
         typed_text_render = font.render(typed_text, True, BLACK)
         screen.blit(typed_text_render, (WIDTH / 2 - scale_x(30), HEIGHT * 4/5 + scale_y(30)))
 
