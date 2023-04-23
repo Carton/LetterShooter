@@ -97,9 +97,12 @@ class Invader:
         self.speed = scale_y(random.uniform(1, level) * SPEED_MOD)
         self.angle = random.uniform(-45, 45)
         self.pos = [random.randint(scale_x(100), WIDTH - scale_x(180)), 0]
-        self.size = scale_min_xy(random.uniform(50, 70))
+
         # TODO: Consider using some special effects, such as bold text, faster falling speed, but higher scores
-        self.text_render = font.render(self.text, True, BLACK)
+        invader_font = pygame.font.Font(os.path.join(FONT_DIR, "Orbitron-VariableFont_wght.ttf"), scale_min_xy(random.uniform(30, 36)))
+        self.text_render = invader_font.render(self.text, True, BLACK)
+        self.size = self.text_render.get_rect().size
+
         self.explosion = False
         self.explosion_timer = None
         self.exploded = False
@@ -131,12 +134,21 @@ class Invader:
 
 
 class LaserBeam:
-    def __init__(self, target_pos):
-        self.target_pos = target_pos
-        self.pos = [WIDTH / 2, HEIGHT * 4 / 5]
+    size = (scale_x(50), scale_x(50))
+    images = [pygame.image.load(os.path.join(IMAGE_DIR, 'laser_beam', f"{i}.png")) for i in range(5)]
+    # FIXME: Why can't we use size here?
+    images = [pygame.transform.scale(image, (scale_x(50), scale_x(50))) for image in images]
+
+    def __init__(self, target):
+        target_center_x = target.pos[0] + target.size[0] / 2 - LaserBeam.size[0] / 2
+        target_center_y = target.pos[1] + target.size[1] / 2 - LaserBeam.size[1] / 2
+        self.target_pos = [target_center_x, target_center_y]
+        print(target.pos, target.size, self.target_pos)
+
+        self.pos = [WIDTH / 2 + scale_x(50), (HEIGHT * 4 / 5) + scale_x(50)]
         self.speed = scale_y(10)
-        self.image = pygame.image.load(os.path.join(IMAGE_DIR, "laser_beam.png"))
-        self.image = pygame.transform.scale(self.image, (scale_x(50), scale_y(50)))
+        # choose random laser beam image
+        self.image = random.choice(LaserBeam.images)
         self.active = True
 
     def update(self):
@@ -292,7 +304,7 @@ def main():
                             if invader.text == typed_text:
                                 shoot_sound.play()
                                 invader.laser_hit = True
-                                laser_beams.append(LaserBeam(invader.pos))
+                                laser_beams.append(LaserBeam(invader))
                                 typed_text = ''
                                 break
 
