@@ -35,7 +35,6 @@ def scale_y(y):
 def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
-# TODO: Laser to calculate lead time
 # TODO: Settings interface, can set the number of lives, difficulty (speed, number of letters), sound effect switch, background music switch
 # TODO: Implement a high score screen
 
@@ -142,16 +141,19 @@ class LaserBeam:
     images = [pygame.transform.scale(image, (scale_x(50), scale_x(50))) for image in images]
 
     def __init__(self, target):
-        target_center_x = target.pos[0] + target.size[0] / 2 - LaserBeam.size[0] / 2
-        target_center_y = target.pos[1] + target.size[1] / 2 - LaserBeam.size[1] / 2
-        self.target_pos = [target_center_x, target_center_y]
-        # print(target.pos, target.size, self.target_pos)
+        self.target = target
 
         self.pos = [WIDTH / 2 + scale_x(50), (HEIGHT * 4 / 5) + scale_x(50)]
         self.speed = scale_y(10)
         # choose random laser beam image
         self.image = random.choice(LaserBeam.images)
         self.active = True
+
+    def update_target_pos(self):
+        target_center_x = self.target.pos[0] + self.target.size[0] / 2 - LaserBeam.size[0] / 2
+        target_center_y = self.target.pos[1] + self.target.size[1] / 2 - LaserBeam.size[1] / 2
+        self.target_pos = [target_center_x, target_center_y]
+        # print(self.target.pos, self.target.size, self.target_pos)
 
     def update(self):
         direction = [self.target_pos[0] - self.pos[0], self.target_pos[1] - self.pos[1]]
@@ -171,6 +173,7 @@ class LaserBeam:
         return angle
 
     def draw(self):
+        self.update_target_pos()
         angle = self.calculate_angle(self.target_pos)
         # Note: Use a negative angle here because pygame's coordinate system is from top to bottom
         rotated_image = pygame.transform.rotate(self.image, -angle)
