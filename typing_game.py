@@ -35,20 +35,22 @@ def scale_y(y):
 def scale_min_xy(v):
     return int(v * min(SCALE_X, SCALE_Y))
 
-# TODO: Use more colors for the laser
+# TODO: Laser to calculate lead time
 # TODO: Settings interface, can set the number of lives, difficulty (speed, number of letters), sound effect switch, background music switch
+# TODO: Implement a high score screen
 
 # Create game window
 BASE_WIDTH, BASE_HEIGHT = 800, 600
 
 screen_info = pygame.display.Info()
 WIDTH, HEIGHT = screen_info.current_w, screen_info.current_h
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 SCALE_X = WIDTH / BASE_WIDTH
 SCALE_Y = HEIGHT / BASE_HEIGHT
 
-pygame.display.set_caption('Typing Game for Kids')
+pygame.display.set_caption('Letter Shooter - a typing game')
 
 # Load resources
 background_image = pygame.image.load(os.path.join(IMAGE_DIR, "saturn_scifi_background.jpg"))
@@ -136,14 +138,14 @@ class Invader:
 class LaserBeam:
     size = (scale_x(50), scale_x(50))
     images = [pygame.image.load(os.path.join(IMAGE_DIR, 'laser_beam', f"{i}.png")) for i in range(5)]
-    # FIXME: Why can't we use size here?
+
     images = [pygame.transform.scale(image, (scale_x(50), scale_x(50))) for image in images]
 
     def __init__(self, target):
         target_center_x = target.pos[0] + target.size[0] / 2 - LaserBeam.size[0] / 2
         target_center_y = target.pos[1] + target.size[1] / 2 - LaserBeam.size[1] / 2
         self.target_pos = [target_center_x, target_center_y]
-        print(target.pos, target.size, self.target_pos)
+        # print(target.pos, target.size, self.target_pos)
 
         self.pos = [WIDTH / 2 + scale_x(50), (HEIGHT * 4 / 5) + scale_x(50)]
         self.speed = scale_y(10)
@@ -194,8 +196,8 @@ def game_over(score, invaders):
     game_over_text = font.render(f'Game Over! Your score: {score}', True, BLACK)
     restart_text = font.render('Press R to restart the game', True, BLACK)
 
-    screen.blit(game_over_text, (WIDTH / 2 - scale_x(200), HEIGHT / 2 - scale_y(50)))
-    screen.blit(restart_text, (WIDTH / 2 - scale_x(200), HEIGHT / 2))
+    screen.blit(game_over_text, (WIDTH / 2 - game_over_text.get_rect().size[0] / 2, HEIGHT / 2 - scale_y(50)))
+    screen.blit(restart_text, (WIDTH / 2 - restart_text.get_rect().size[0] / 2, HEIGHT / 2))
     pygame.display.update()
 
     while True:
@@ -215,8 +217,8 @@ def pause():
     pause_text = font.render('Game Paused', True, BLACK)
     restart_text = font.render('Press Q to quit, other keys to resume', True, BLACK)
     # Display on the original background
-    screen.blit(pause_text, (WIDTH / 2 - scale_x(90), HEIGHT / 2 - scale_y(50)))
-    screen.blit(restart_text, (WIDTH / 2 - scale_x(250), HEIGHT / 2))
+    screen.blit(pause_text, (WIDTH / 2 - pause_text.get_rect().size[0] / 2, HEIGHT / 2 - scale_y(50)))
+    screen.blit(restart_text, (WIDTH / 2 - restart_text.get_rect().size[0] / 2, HEIGHT / 2))
     pygame.display.update()
 
     while True:
@@ -245,12 +247,14 @@ def main():
     pygame.mixer.music.load(os.path.join(SOUND_DIR, 'neon-gaming-128925.mp3'))
     pygame.mixer.music.play(-1)
 
+    score_text_max_width = font.render('Score:0000', True, BLACK).get_rect().size[0]
+
     while not gameover:
         screen.blit(background, (0, 0))
 
         # Update scoreboard
-        score_text = font.render(f'Score: {score}', True, BLACK)
-        screen.blit(score_text, ((WIDTH - scale_x(180)), scale_y(10)))
+        score_text = font.render(f'Score:{score:4}', True, BLACK)
+        screen.blit(score_text, ((WIDTH - score_text_max_width), scale_y(10)))
 
         # Update the number of current lives
         for i in range(HEALTH - invaders_reached_ground):
@@ -320,7 +324,7 @@ def main():
 
         # Display the current keystrokes entered by the user on the screen
         typed_text_render = font.render(typed_text, True, BLACK)
-        screen.blit(typed_text_render, (WIDTH / 2 - scale_x(30), HEIGHT * 4/5 + scale_y(30)))
+        screen.blit(typed_text_render, (WIDTH / 2 - typed_text_render.get_rect().size[0] / 2, HEIGHT * 4/5 + scale_y(30)))
 
         if score // SCORES_PER_LEVEL >= level:
             level += 1
